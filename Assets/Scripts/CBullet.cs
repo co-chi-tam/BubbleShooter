@@ -75,6 +75,7 @@ public class CBullet : MonoBehaviour {
 		} else if (value.gameObject.CompareTag ("Wall")) {
 			var pointContact = value.contacts [0];
 			this.m_MovePosition = Vector2.Reflect (this.m_MovePosition, pointContact.normal);
+			this.m_MovePosition.z = 0f;
 		}
 	}
 
@@ -106,7 +107,8 @@ public class CBullet : MonoBehaviour {
 		if (this.m_Freeze)
 			return;
 		this.m_IsMoving = true;
-		this.m_MovePosition = Camera.main.ScreenToWorldPoint (Input.mousePosition);
+		this.m_MovePosition = Camera.main.ScreenToWorldPoint (Input.mousePosition) - this.m_StartPosition;
+		this.m_MovePosition.z = 0f;
 		if (this.OnShoot != null) {
 			this.OnShoot.Invoke ();
 		}
@@ -117,10 +119,8 @@ public class CBullet : MonoBehaviour {
 	}
 
 	public virtual void Move () {
-		var startPosition = this.m_StartPosition;
-		var direction = this.m_MovePosition - startPosition;
 		var position = this.m_Transform.position;
-		position += direction.normalized * Time.deltaTime * this.m_Speed;
+		position += this.m_MovePosition.normalized * Time.deltaTime * this.m_Speed;
 		position.z = 0f;
 		this.m_Transform.position = position;
 	}

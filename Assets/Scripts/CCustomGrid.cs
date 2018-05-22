@@ -93,7 +93,7 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 		var cX = (int)(cell.cellX + contactPoint.x);
 		var cY = (int)(cell.cellY + contactPoint.y);
 		var isOddRow = cell.cellY % 2 != 0;
-		cX = isOddRow && contactPoint.y > 0 ? cX + 1 : cX;
+		cX = isOddRow && contactPoint.y > this.m_FirstIndex ? cX + 1 : cX;
 		if (this.ContainCell (cX, cY) == false) {
 			var newCell = this.CreateCell (cX, cY);
 			newCell.SetValue (value);

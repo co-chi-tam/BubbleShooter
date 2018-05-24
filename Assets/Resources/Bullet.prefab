@@ -119,12 +119,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61d6d4dd842b5d044a0d4f979e83ac81, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Speed: 10
+  m_Speed: 7
   m_BulletValue:
     m_IntValue: 0
   m_SpriteRenderer: {fileID: 212677459002959816}
   m_StartPosition: {x: 0, y: -4, z: 0}
   m_MovePosition: {x: 0, y: 0, z: 0}
+  OnShoot:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine.CoreModule, Version=0.0.0.0,
+      Culture=neutral, PublicKeyToken=null
   OnDetected:
     m_PersistentCalls:
       m_Calls: []

@@ -65,10 +65,20 @@ public class CBullet : MonoBehaviour {
 				if (this.OnDetected != null) {
 					this.OnDetected.Invoke (cell);
 				}
-				var face = this.GetContactPointToV2 (cell);
-				this.m_GameManager.CreateNeighborCell (cell, face, this.m_BulletValue.intValue);
-				this.Stop ();
-				this.Restart ();
+				var contacts = value.contacts;
+				var isSuccess = false;
+				for (int i = 0; i < contacts.Length; i++) {
+					var face = cell.GetContactPointToV2 (value.contacts[i].point);
+					if (this.m_GameManager.CreateNeighborCell (cell, face, this.m_BulletValue.intValue)) {
+						isSuccess = true;
+						break;
+					}
+				}
+				if (isSuccess) {
+					this.Restart ();
+				} else {
+					this.Return ();
+				}
 			}
 			this.m_Freeze = true;
 			Invoke ("Defreeze", 0.5f);
@@ -103,6 +113,11 @@ public class CBullet : MonoBehaviour {
 		this.SetColorValue (this.m_GameManager.colors[value]);
 	}
 
+	public virtual void Return() {
+		this.m_Transform.position = this.m_StartPosition;
+		this.m_IsMoving = false;
+	}
+
 	public virtual void Shoot() {
 		if (this.m_Freeze)
 			return;
@@ -112,10 +127,6 @@ public class CBullet : MonoBehaviour {
 		if (this.OnShoot != null) {
 			this.OnShoot.Invoke ();
 		}
-	}
-
-	public virtual void Stop() {
-		this.m_IsMoving = false;
 	}
 
 	public virtual void Move () {
@@ -128,37 +139,6 @@ public class CBullet : MonoBehaviour {
 	#endregion
 
 	#region Getter && Setter
-
-	public virtual Vector2 GetContactPointToV2(CCell value) {
-		// GET DETECT POINT NEAREST
-		var contactPoints = value.detectPoints;
-		var anglePoint = -1;
-		var minDistance = 9999f;
-		for (int i = 0; i < contactPoints.Length; i++) {
-			var direction = this.m_Transform.position - contactPoints [i].transform.position;
-			var currentDistance = direction.sqrMagnitude;
-			if (direction.sqrMagnitude < minDistance) {
-				anglePoint = i;
-				minDistance = direction.sqrMagnitude;
-			}
-		}
-		// CALCULATE POINT
-		switch (anglePoint) {
-		default:
-		case 0:
-			return new Vector2 (-1f, -1f);
-		case 1:
-			return new Vector2 (0f, -1f);
-		case 2:
-			return new Vector2 (1f, 0f);
-		case 3:
-			return new Vector2 (0f, 1f);
-		case 4:
-			return new Vector2 (-1f, 1f);
-		case 5:
-			return new Vector2 (-1f, 0f);
-		}
-	}
 
 	public virtual void SetValue(int value) {
 		this.m_BulletValue.intValue = value;

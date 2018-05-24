@@ -124,7 +124,8 @@ public class CCell : MonoBehaviour {
 		// FALL OUT
 		this.m_Collider.isTrigger = true;
 		this.m_Rigidbody2D.bodyType = RigidbodyType2D.Dynamic;
-		this.m_Rigidbody2D.AddExplosionForce (500f, Vector3.up, 1f);
+		var random = UnityEngine.Random.insideUnitCircle;
+		this.m_Rigidbody2D.AddForce (random * 10f, ForceMode2D.Impulse);
 		// EVENT TRIGGER
 		if (this.OnExplosion != null) {
 			this.OnExplosion.Invoke ();
@@ -242,6 +243,64 @@ public class CCell : MonoBehaviour {
 
 	public virtual bool GetCellActive() {
 		return this.m_CellActive;
+	}
+
+//	public virtual Vector2 GetContactPointToV2WithExcept (Vector3 point, List<Vector2> excepts = null) {
+//		// GET DETECT POINT NEAREST
+//		var detectPoints = this.detectPoints;
+//		var anglePoint = -1;
+//		var minDistance = 9999f;
+//		for (int i = 0; i < detectPoints.Length; i++) {
+//			var dePoint = detectPoints [i].transform.position;
+//			if (excepts != null && excepts.Count < detectPoints.Length) {
+//				
+//			} 
+//			var direction = point - dePoint;
+//			direction.z = 0f;
+//			var currentDistance = direction.sqrMagnitude;
+//			if (currentDistance < minDistance) {
+//				anglePoint = i;
+//				minDistance = currentDistance;
+//			}
+//		}
+//		return this.GetIndexPointToV2 (anglePoint);
+//	}
+
+	public virtual Vector2 GetContactPointToV2 (Vector3 point) {
+		// GET DETECT POINT NEAREST
+		var detectPoints = this.detectPoints;
+		var anglePoint = -1;
+		var minDistance = 9999f;
+		for (int i = 0; i < detectPoints.Length; i++) {
+			var dePoint = detectPoints [i].transform.position;
+			var direction = point - dePoint;
+			direction.z = 0f;
+			var currentDistance = direction.sqrMagnitude;
+			if (currentDistance < minDistance) {
+				anglePoint = i;
+				minDistance = currentDistance;
+			}
+		}
+		return this.GetIndexPointToV2 (anglePoint);
+	}
+
+	public virtual Vector2 GetIndexPointToV2 (int anglePoint) {
+		// CALCULATE POINT
+		switch (anglePoint) {
+		default:
+		case 0:
+			return new Vector2 (-1f, -1f);
+		case 1:
+			return new Vector2 (0f, -1f);
+		case 2:
+			return new Vector2 (1f, 0f);
+		case 3:
+			return new Vector2 (0f, 1f);
+		case 4:
+			return new Vector2 (-1f, 1f);
+		case 5:
+			return new Vector2 (-1f, 0f);
+		}
 	}
 
 	#endregion

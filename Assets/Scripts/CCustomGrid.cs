@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
+using UnityEngine.Events;
 using SimpleSingleton;
 
 public class CCustomGrid : CMonoSingleton<CCustomGrid> {
@@ -17,6 +19,7 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 	}
 
 	[Header ("Configs")]
+	[SerializeField]	protected TextAsset m_Map;
 	[SerializeField]	protected int m_Row = 5;
 	[SerializeField]	protected int m_MinCellWidth = 3;
 	[SerializeField]	protected int m_MaxCellWidth = 4;
@@ -26,6 +29,11 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 	[Header ("Grids")]
 	[SerializeField]	protected int m_FirstIndex = 0;
 	[SerializeField]	protected List<CCell> m_Grid;
+
+	[Header ("Events")]
+	public UnityEvent OnLoaded;
+	public UnityEvent OnUpdateGrid;
+	public UnityEvent OnClear;
 
 	protected Transform m_Transform;
 
@@ -40,9 +48,11 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 	}
 
 	protected virtual void Start() {
-		this.InitGrid ();
-//		var cell = this.CreateCell (0, 4);
-//		cell.SetValue (this.GetRandomValue ());
+		if (this.m_Map != null) {
+			this.LoadGrid (this.m_Map.text);
+		} else {
+			this.InitGrid ();
+		}
 	}
 
 	protected virtual void LateUpdate() {
@@ -52,6 +62,43 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 	#endregion
 
 	#region Main methods
+
+	public virtual void LoadGrid(string strValue) {
+		if (this.m_CellPrefab == null)
+			return;
+		var stringSplits = strValue.Split ('\n');
+		this.m_Row = stringSplits.Length;
+		this.m_MinCellWidth = 9999;
+		this.m_MaxCellWidth = -9999;
+		for (int y = 0; y < this.m_Row; y++) {
+			var strRow = stringSplits [y].Split('#');
+			if (strRow.Length - 1 > this.m_MaxCellWidth) {
+				this.m_MaxCellWidth = strRow.Length - 1;
+			}
+			if (strRow.Length - 1 < this.m_MinCellWidth) {
+				this.m_MinCellWidth = strRow.Length - 1;
+			}
+		}
+		for (int y = 0; y < this.m_Row; y++) {
+			var isOddRow = y % 2 != 0;
+			var strRow = stringSplits [y].Split('#');
+			for (int x = 1; x < strRow.Length; x++) {
+				if (string.IsNullOrEmpty (strRow [x]) || strRow [x].Equals ("_"))
+					continue;
+				var cell = this.CreateCell (x - 1, y);
+				var value = int.Parse (strRow [x]);
+				cell.SetValue (value);
+				cell.SetColorValue (this.m_Colors [value]);
+				cell.SetCellActive (true);
+			}
+		}
+		this.InvokeRepeating ("CheckNotAvailableCell", 0f, 0.25f);
+		this.m_FirstIndex = 0;
+		// EVENT TRIGGER
+		if (this.OnLoaded != null) {
+			this.OnLoaded.Invoke ();
+		}
+	}
 
 	public virtual void InitGrid() {
 		if (this.m_CellPrefab == null)
@@ -69,6 +116,10 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 		}
 		this.InvokeRepeating ("CheckNotAvailableCell", 0f, 0.25f);
 		this.m_FirstIndex = 0;
+		// EVENT TRIGGER
+		if (this.OnLoaded != null) {
+			this.OnLoaded.Invoke ();
+		}
 	}
 
 	public virtual void InitCell (int x, int y, CCell cell) {
@@ -89,7 +140,7 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 		this.m_FirstIndex = this.m_FirstIndex > y ? y : this.m_FirstIndex;
 	}
 
-	public virtual void CreateNeighborCell (CCell cell, Vector2 contactPoint, int value) {
+	public virtual bool CreateNeighborCell (CCell cell, Vector2 contactPoint, int value) {
 		var cX = (int)(cell.cellX + contactPoint.x);
 		var cY = (int)(cell.cellY + contactPoint.y);
 		var isOddRow = cell.cellY % 2 != 0;
@@ -100,9 +151,10 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 			newCell.SetColorValue (this.m_Colors [value]);
 			newCell.SetCellActive (true);
 			newCell.ExplosionNeighborSameValue ();
-		} else {
-			Debug.Log ("Duplicate Cell " + cX + "|" + cY);
-		}
+			return true;
+		} 
+		Debug.Log ("Duplicate Cell " + cX + "|" + cY);
+		return false;
 	}
 
 	public virtual CCell CreateCell (int x, int y) {
@@ -124,6 +176,7 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 	}
 
 	public virtual void CheckNotAvailableCell () {
+		var isDirty = false;
 		var cacheCells = new LinkedList <CCell> ();
 		for (int i = 0; i < this.m_Grid.Count; i++) {
 			var cell = this.m_Grid [i];
@@ -138,8 +191,16 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 					cell.Explosion ();
 					cacheCells.AddLast (cell);
 					this.RemoveCell (cell);
+					isDirty = true;
 				}
 			}
+		}
+		// EVENTS TRIGGER
+		if (this.OnLoaded != null && isDirty) {
+			this.OnLoaded.Invoke ();
+		}
+		if (this.OnClear != null && this.m_Grid.Count == 0) {
+			this.OnClear.Invoke ();
 		}
 	}
 

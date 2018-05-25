@@ -87,6 +87,8 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 					continue;
 				var cell = this.CreateCell (x - 1, y);
 				var value = int.Parse (strRow [x]);
+				if (value >= this.m_Colors.Length)
+					continue;
 				cell.SetValue (value);
 				cell.SetColorValue (this.m_Colors [value]);
 				cell.SetCellActive (true);

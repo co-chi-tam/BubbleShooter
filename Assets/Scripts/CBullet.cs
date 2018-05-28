@@ -19,6 +19,10 @@ public class CBullet : MonoBehaviour {
 		set { this.m_BulletValue.intValue = value; }
 	}
 	[SerializeField]	protected SpriteRenderer m_SpriteRenderer;
+	public Sprite spiteRenderer {
+		get { return this.m_SpriteRenderer.sprite; }
+		set { this.m_SpriteRenderer.sprite = value; }
+	}
 	[SerializeField]	protected Vector3 m_StartPosition;
 	[SerializeField]	protected Vector3 m_MovePosition;
 
@@ -69,7 +73,7 @@ public class CBullet : MonoBehaviour {
 				var isSuccess = false;
 				for (int i = 0; i < contacts.Length; i++) {
 					var face = cell.GetContactPointToV2 (value.contacts[i].point);
-					if (this.m_GameManager.CreateNeighborCell (cell, face, this.m_BulletValue.intValue)) {
+					if (this.m_GameManager.CreateNeighborCell (cell, face, this.m_BulletValue)) {
 						isSuccess = true;
 						break;
 					}
@@ -110,7 +114,6 @@ public class CBullet : MonoBehaviour {
 		this.m_IsMoving = false;
 		var value = this.m_GameManager.GetRandomValue ();
 		this.SetValue (value);
-		this.SetColorValue (this.m_GameManager.colors[value]);
 	}
 
 	public virtual void Return() {
@@ -140,15 +143,20 @@ public class CBullet : MonoBehaviour {
 
 	#region Getter && Setter
 
-	public virtual void SetValue(int value) {
-		this.m_BulletValue.intValue = value;
+	public virtual void SetValue(CValue value) {
+		this.m_BulletValue.intValue = value.intValue;
+		this.m_BulletValue.colorValue = value.colorValue;
+		this.m_BulletValue.spiteValue = value.spiteValue;
+		this.m_BulletValue.gobjectValue = value.gobjectValue;
+//		this.m_SpriteRenderer.color = value.colorValue;
+		this.m_SpriteRenderer.sprite = value.spiteValue;
 	}
 
-	public virtual void SetColorValue (Color color) {
-		this.m_SpriteRenderer.color = color;
+	public virtual CValue GetValue() {
+		return this.m_BulletValue;
 	}
 
-	public virtual int GetValue() {
+	public virtual int GetIntValue() {
 		return this.m_BulletValue.intValue;
 	}
 

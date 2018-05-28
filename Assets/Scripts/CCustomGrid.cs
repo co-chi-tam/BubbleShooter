@@ -11,11 +11,10 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 	#region Fields
 
 	[Header ("Cell")]
-	[SerializeField]	protected CCell m_CellPrefab;
-	[SerializeField]	protected Color[] m_Colors;
-	public Color[] colors {
-		get { return this.m_Colors; }
-		set { this.m_Colors = value; }
+	[SerializeField]	protected CValue[] m_Values;
+	public CValue[] values {
+		get { return this.m_Values; }
+		set { this.m_Values = value; }
 	}
 
 	[Header ("Configs")]
@@ -64,8 +63,6 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 	#region Main methods
 
 	public virtual void LoadGrid(string strValue) {
-		if (this.m_CellPrefab == null)
-			return;
 		var stringSplits = strValue.Split ('\n');
 		this.m_Row = stringSplits.Length;
 		this.m_MinCellWidth = 9999;
@@ -85,16 +82,16 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 			for (int x = 1; x < strRow.Length; x++) {
 				if (string.IsNullOrEmpty (strRow [x]) || strRow [x].Equals ("_"))
 					continue;
-				var cell = this.CreateCell (x - 1, y);
-				var value = int.Parse (strRow [x]);
-				if (value >= this.m_Colors.Length)
+				var indexValue = int.Parse (strRow [x]);
+				var value = this.m_Values [indexValue];
+				var cell = this.CreateCell (x - 1, y, value);
+				if (indexValue >= this.m_Values.Length)
 					continue;
 				cell.SetValue (value);
-				cell.SetColorValue (this.m_Colors [value]);
 				cell.SetCellActive (true);
 			}
 		}
-		this.InvokeRepeating ("CheckNotAvailableCell", 0f, 0.25f);
+		this.InvokeRepeating ("CheckNotAvailableCell", 0f, 0.5f);
 		this.m_FirstIndex = 0;
 		// EVENT TRIGGER
 		if (this.OnLoaded != null) {
@@ -103,20 +100,17 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 	}
 
 	public virtual void InitGrid() {
-		if (this.m_CellPrefab == null)
-			return;
 		for (int y = 0; y < this.m_Row; y++) {
 			var isOddRow = y % 2 != 0;
 			var nextCellWidth = isOddRow ? this.m_MinCellWidth : this.m_MaxCellWidth;
 			for (int x = 0; x < nextCellWidth; x++) {
-				var cell = this.CreateCell (x, y);
 				var value = this.GetRandomValue ();
+				var cell = this.CreateCell (x, y, value);
 				cell.SetValue (value);
-				cell.SetColorValue (this.m_Colors [value]);
 				cell.SetCellActive (true);
 			}
 		}
-		this.InvokeRepeating ("CheckNotAvailableCell", 0f, 0.25f);
+		this.InvokeRepeating ("CheckNotAvailableCell", 0f, 0.5f);
 		this.m_FirstIndex = 0;
 		// EVENT TRIGGER
 		if (this.OnLoaded != null) {
@@ -142,15 +136,14 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 		this.m_FirstIndex = this.m_FirstIndex > y ? y : this.m_FirstIndex;
 	}
 
-	public virtual bool CreateNeighborCell (CCell cell, Vector2 contactPoint, int value) {
+	public virtual bool CreateNeighborCell (CCell cell, Vector2 contactPoint, CValue value) {
 		var cX = (int)(cell.cellX + contactPoint.x);
 		var cY = (int)(cell.cellY + contactPoint.y);
 		var isOddRow = cell.cellY % 2 != 0;
 		cX = isOddRow && contactPoint.y > this.m_FirstIndex ? cX + 1 : cX;
 		if (this.ContainCell (cX, cY) == false) {
-			var newCell = this.CreateCell (cX, cY);
+			var newCell = this.CreateCell (cX, cY, value);
 			newCell.SetValue (value);
-			newCell.SetColorValue (this.m_Colors [value]);
 			newCell.SetCellActive (true);
 			newCell.ExplosionNeighborSameValue ();
 			return true;
@@ -159,10 +152,11 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 		return false;
 	}
 
-	public virtual CCell CreateCell (int x, int y) {
-		var cellObj = Instantiate<CCell> (this.m_CellPrefab);
-		this.AddCell (x, y, cellObj);
-		return cellObj;
+	public virtual CCell CreateCell (int x, int y, CValue value) {
+		var cellObj = Instantiate<GameObject> (value.gobjectValue);
+		var cell = cellObj.GetComponent<CCell> ();
+		this.AddCell (x, y, cell);
+		return cell;
 	}
 
 	public virtual void AddCell (int x, int y, CCell cell) {
@@ -256,8 +250,8 @@ public class CCustomGrid : CMonoSingleton<CCustomGrid> {
 		return string.Format ("Cell {0}|{1}", x, y);
 	}
 
-	public virtual int GetRandomValue() {
-		return UnityEngine.Random.Range (0, this.m_Colors.Length);
+	public virtual CValue GetRandomValue() {
+		return this.m_Values[ UnityEngine.Random.Range (0, this.m_Values.Length) ];
 	}
 
 	#endregion

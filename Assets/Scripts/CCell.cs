@@ -21,7 +21,12 @@ public class CCell : MonoBehaviour {
 		set { if (this.m_Collider != null) this.m_Collider.radius = value; }
 	}
 	[SerializeField]	protected Rigidbody2D m_Rigidbody2D;
-	[SerializeField]	protected SpriteRenderer m_SpriteRenderer;
+	[SerializeField]	protected SpriteRenderer m_SpriteRenderer;	
+	public Sprite spiteRenderer {
+		get { return this.m_SpriteRenderer.sprite; }
+		set { this.m_SpriteRenderer.sprite = value; }
+	}
+	[SerializeField]	protected float m_Explosion = 5f;
 	[SerializeField]	protected int m_CellX = 0; // Cell X axis  in grid
 	public int cellX {
 		get { return this.m_CellX; }
@@ -125,7 +130,7 @@ public class CCell : MonoBehaviour {
 		this.m_Collider.isTrigger = true;
 		this.m_Rigidbody2D.bodyType = RigidbodyType2D.Dynamic;
 		var random = UnityEngine.Random.insideUnitCircle;
-		this.m_Rigidbody2D.AddForce (random * 10f, ForceMode2D.Impulse);
+		this.m_Rigidbody2D.AddForce (random * this.m_Explosion, ForceMode2D.Impulse);
 		// EVENT TRIGGER
 		if (this.OnExplosion != null) {
 			this.OnExplosion.Invoke ();
@@ -144,6 +149,7 @@ public class CCell : MonoBehaviour {
 		}
 	}
 
+	// Get neighbors
 	private RaycastHit2D[] m_CacheColliders = new RaycastHit2D[99];
 	public virtual List<CCell> DetectedNeighbors () {
 		var results = new List<CCell> ();
@@ -162,6 +168,7 @@ public class CCell : MonoBehaviour {
 		return results;
 	}
 
+	// Check available cell 
 	public virtual bool IsAvailable (Func <CCell, bool> condition) {
 		var cacheCells = new LinkedList <CCell> ();
 		var queueCells = new Queue<CCell> ();
@@ -185,6 +192,7 @@ public class CCell : MonoBehaviour {
 		return false;
 	}
 
+	// Get all neighbor same value.
 	public virtual List<CCell> DetectSameValue () {
 		var result = new List<CCell> ();
 		var queueCells = new Queue<CCell> ();
@@ -208,12 +216,12 @@ public class CCell : MonoBehaviour {
 
 	#region Getter && Setter
 
-	public virtual void SetValue(int value) {
-		this.m_CellValue.intValue = value;
-	}
-
-	public virtual void SetColorValue(Color color) {
-		this.m_SpriteRenderer.color = color;
+	public virtual void SetValue(CValue value) {
+		this.m_CellValue.intValue = value.intValue;
+		this.m_CellValue.colorValue = value.colorValue;
+		this.m_CellValue.gobjectValue = value.gobjectValue;
+//		this.m_SpriteRenderer.color = value.colorValue;
+//		this.m_SpriteRenderer.sprite = value.spiteValue;
 	}
 
 	public virtual int GetValue() {
